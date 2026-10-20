@@ -1,4 +1,5 @@
 var jws = require('jws');
+var asymmetricKeyInfo = require('./lib/asymmetric-key');
 
 module.exports.decode = function (jwt) {
   return jws.decode(jwt).payload;
@@ -62,6 +63,10 @@ module.exports.verify = function(jwtString, secretOrPublicKey, options, callback
   var decoded = jws.decode(jwtString);
   var header = decoded && decoded.header;
   if (!header || !~algorithms.indexOf(header.alg))
+    return callback(new Error('invalid signature'));
+
+  var keyInfo = asymmetricKeyInfo(secretOrPublicKey);
+  if (keyInfo && !asymmetricKeyInfo.keyAllowsAlgorithm(keyInfo, header.alg))
     return callback(new Error('invalid signature'));
 
   var payload = this.decode(jwtString);
